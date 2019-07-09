@@ -1,5 +1,5 @@
 http_server:http_server.c
-	gcc -o http_server http_server.c
+	sudo gcc -o http_server http_server.c
 clean:
-	rm ./http_server
+	sudo rm -rf ./http_server ./http_server.c~ ./README.md~
 
