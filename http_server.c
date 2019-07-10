@@ -7,16 +7,33 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include "user_method.h"
+#include <time.h>
 #define MAX_RCV_SIZE 3000
-const char* header = "HTTP/1.1 200 OK\r\nContent-type: text\r\n\r\n";
+const char* header = "HTTP/1.1 200 OK\r\nContent-type: text\r\n";
+int send_date(int client_fd)
+{
+	char buf[100] = {0};
+	time_t t;
+	time(&t);
+	bzero(buf,sizeof(buf));
+	snprintf(buf,sizeof(buf),"Date:%s\r\n",ctime(&t));
+	if(send(client_fd, buf, strlen(buf), 0)<0)
+	{
+		perror("send");
+		return 1;
+	}
+	return 0;
+}
 int GET_cb(int client_fd,char* full_buf,int full_len)
 {
 	fprintf(stdout,".......%s \n",__FUNCTION__);
  	char buf[1024] = {0};
 	send(client_fd,header,strlen(header),0);
+	send_date(client_fd);
+	send(client_fd,"\r\n",strlen("\r\n"),0);//header send complete
 
 	memset(buf,0,sizeof(buf));
-	snprintf(buf,sizeof(buf),"every thing is ok\r\n");
+	snprintf(buf,sizeof(buf),"take easy,every thing is ok\r\n");
 	if(send(client_fd, buf, strlen(buf), 0)<0)
 	{
 		perror("send");
@@ -32,13 +49,30 @@ int POST_cb(int client_fd,char* full_buf,int full_len)
 {
  	fprintf(stdout,".......%s \n",__FUNCTION__);
 	send(client_fd,header,strlen(header),0);
+	send_date(client_fd);
+	send(client_fd,"\r\n",strlen("\r\n"),0);//header send complete
+	
+	char* payload = strstr(full_buf,"\r\n\r\n");
+	payload +=  strlen("\r\n\r\n");
+	int payload_len = full_len -(payload - full_buf );
+	printf("payback %d:%s \n",payload_len,payload);
+	if(send(client_fd,payload,payload_len,0) < 0)//just send back to src address
+	{
+		perror("send");
+		return 1;
+	}
 	return 0;
 }
 
 int HEAD_cb(int client_fd,char* full_buf,int full_len)
 {
 	fprintf(stdout,".......%s \n",__FUNCTION__);
+
+
 	send(client_fd,header,strlen(header),0);
+	send_date(client_fd);
+	send(client_fd,"\r\n",strlen("\r\n"),0);//header send complete
+
 	return 0;
 }
 struct method methods[]=
@@ -51,16 +85,18 @@ struct method methods[]=
 int request_process(int client_fd,char* full_buf,int full_len)
 {
 	int i = 0;
+	int method_exist = 0;
 	fprintf(stdout,"rcv %d : \n%s \n",full_len,full_buf);
 	for(i=0;i<ARRAY_SIZE(methods);i++)
 	{
 		if(strstr(full_buf,methods[i].str)!=NULL)
 		{
 				methods[i].cb(client_fd,full_buf,full_len);
+				method_exist = 1;
 		}
 		
 	}
-	if(i>=ARRAY_SIZE(methods))
+	if(!method_exist)
 	{
 		fprintf(stdout,"method not support!");
 	}
@@ -149,6 +185,8 @@ int main(int argc,char** argv)
 			}while(r>0);			
 			/*request_process*/
 			request_process(client_fd,full_buf,full_len);
+			memset(full_buf,0,sizeof(full_buf));
+			full_len = 0;
 			close(client_fd);
 		}
 	}
