@@ -30,9 +30,7 @@ int GET_cb(int client_fd,char* full_buf,int full_len)
 
 int POST_cb(int client_fd,char* full_buf,int full_len)
 {
- 	fprintf(stdout,".......%s \n",__FUNCTION__);
-	send(client_fd,header,strlen(header),0);
-	return 0;
+ 
 }
 
 int HEAD_cb(int client_fd,char* full_buf,int full_len)
