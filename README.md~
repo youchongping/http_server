@@ -1,6 +1,6 @@
 # http_server  
 this is just a simple httpd .   
--------------------------------------       
+-------------------------------------    
 ---modify:  
 	modify" server_addr.sin_addr.s_addr = inet_addr("172.16.0.12"); "  
 	as your actual ip in http_srver.c  
