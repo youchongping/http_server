@@ -92,7 +92,7 @@ int request_process(int client_fd,char* full_buf,int full_len)
 {
 	int i = 0;
 	int method_exist = 0;
-	fprintf(stdout,"rcv %d : \n%s \n",full_len,full_buf);
+	//fprintf(stdout,"rcv %d : \n%s \n",full_len,full_buf);
 	for(i=0;i<ARRAY_SIZE(methods);i++)
 	{
 		if(strstr(full_buf,methods[i].str)!=NULL)
