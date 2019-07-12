@@ -1,11 +1,7 @@
 # http_server  
 this is just a simple httpd .   
 -------------------------------------       
----modify:   
- 
-	modify" server_addr.sin_addr.s_addr = inet_addr("172.16.0.12"); "  
-	as your actual ip in http_srver.c   
- 
+
 ---make:   
  
 	make    
@@ -19,6 +15,7 @@ this is just a simple httpd .
 	0.enter the host:port in any browser,  
 	will call the GET method defult ,   
 	and will display "take easy,everthing is ok" in browser.   
+	url may like this:http://172.16.0.13:1989 or http://0.0.0.0:1989   
 
 	1.or you can user RESTclient  in firefox to test it.    
 
