@@ -110,7 +110,7 @@ char make_rsp_buf(char* path,char path_len,char* buf,int buf_len)
 	{
 		snprintf(buf,buf_len,"take easy,everthing is ok");
 	}
-	else if(strncmp(path,"/wifi/config",path_len) == 0)
+	else if(strncmp(path,"/wifi/config",strlen("/wifi/config")) == 0) 
 	{
 		snprintf(buf,buf_len,"config ok");
 	}
