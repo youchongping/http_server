@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include "user_method.h"
 #include <time.h>
+#include <ifaddrs.h>
+
 #define MAX_RCV_SIZE 3000
 #define CACHE_SIZE 512
 #define SERVER_PORT "1989"
@@ -227,6 +229,29 @@ void get_len(const char* buf,int* header_len,int* content_len)
 	fprintf(stdout,"header_len:%d content_len:%d \n",*header_len,*content_len);
 	return;
 }
+
+int get_local_ip(char* ip)
+{
+	struct ifaddrs* if_addr;
+	void* p;
+	getifaddrs(&if_addr);
+
+	while(if_addr)
+	{
+		if(if_addr->ifa_addr->sa_family ==  AF_INET)
+		{
+			p = &((struct sockaddr_in*)if_addr->ifa_addr)->sin_addr;
+			if(strstr(if_addr->ifa_name,"eth0"))
+			{
+				inet_ntop(AF_INET,p,ip,INET_ADDRSTRLEN);
+				//printf("%s ip:%s \n",if_addr->ifa_name,ip);
+			}
+		}
+		if_addr = if_addr->ifa_next;
+	}
+	freeifaddrs(if_addr);
+	return 0;
+}
 /*************************************************************************/
 int main(int argc,char** argv)
 {
@@ -272,8 +297,12 @@ int main(int argc,char** argv)
 		close(server_fd);
 		exit(EXIT_FAILURE);
 	}
+	
+	char ip[16];
+	bzero(ip,sizeof(ip));
+	get_local_ip(ip);
 
-	printf("httpd running on address:http://%s:%d\n", inet_ntoa(server_addr.sin_addr),ntohs(server_addr.sin_port));
+	printf("httpd running on address:http://%s:%d \n",ip,ntohs(server_addr.sin_port));
 	
 	int r = 0;
 	char* buf = (char*)malloc(CACHE_SIZE);
