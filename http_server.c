@@ -11,9 +11,14 @@
 #define MAX_RCV_SIZE 3000
 #define CACHE_SIZE 512
 #define SERVER_PORT "1989"
+#define MAX_RSP_SIZE 512
 
-char* header = "HTTP/1.1 200 OK\r\nServer: http_server_demo\r\nContent-type: text\r\n";
-char* header_no_method = "HTTP/1.1 405 Method Not Allowed\r\n";
+#define HEAD_FORMAT "HTTP/1.1 ""%s%s""Content-Length: %d\r\n""Date: %s GMT\r\n\r\n"
+
+char* header = "200 OK\r\n";
+char* header_no_method = "405 Method Not Allowed\r\n";
+char* header_page_not_found = "404 Not Found\r\n";
+char* _hh_ = "Server: http_server_demo\r\nContent-type: text\r\n";
 void get_len(const char* buf,int* header_len,int* content_len);
 
 char* now_time(void)
@@ -27,10 +32,24 @@ int send_header(int client_fd,int body_len,int flag)
 {
 	char* buf = (char*)malloc(CACHE_SIZE);
 	bzero(buf,CACHE_SIZE);
-	if(flag)
-		snprintf(buf,CACHE_SIZE,"%s""Content-Length: %d\r\n""Date: %s GMT\r\n\r\n",header,body_len,now_time());
-	else
-		snprintf(buf,CACHE_SIZE,"%s""Content-Length: %d\r\n""Date: %s GMT\r\n\r\n",header_no_method,body_len,now_time());
+	
+	switch(flag)
+	{
+		case OK:
+			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header,/**/_hh_,/**/body_len,/**/now_time());
+			break;
+		case NO_METHOD:
+			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header_no_method,/**/_hh_,/**/body_len,/**/now_time());
+			break;
+		case PAGE_NOT_FOUND:
+			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header_page_not_found,/**/_hh_,/**/body_len,/**/now_time());
+			break;
+		default:
+			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header,/**/_hh_,/**/body_len,/**/now_time());
+			break;
+		
+	}
+		
 	
 	if(send(client_fd, buf, strlen(buf), 0)<0)
 	{
@@ -61,13 +80,67 @@ int send_body(int client_fd,char* content_body,int content_len)
 	}
 	return 0;
 }
+
+void parse_path(char* full_buf,char** path,char* path_len)
+{
+	
+	char* path_start = full_buf + strlen("GET ");
+	char* path_end = strstr(path_start," HTTP/1");
+
+	*path = path_start;
+	*path_len = path_end - path_start;
+
+	if( *path_len == 0)
+	{
+		printf("not find the path \n");
+		*path_len = 0;
+		return;	
+	}
+
+	return;
+}
+
+char make_rsp_buf(char* path,char path_len,char* buf,int buf_len)
+{
+	printf("request path:%.*s\n", path_len, path); 
+	char head_flag = 0;
+	if((strncmp(path,"/",path_len) == 0) || path_len == 0)
+	{
+		snprintf(buf,buf_len,"take easy,everthing is ok");
+	}
+	else if(strncmp(path,"/wifi/config",path_len) == 0)
+	{
+		snprintf(buf,buf_len,"config ok");
+	}
+	else
+	{
+		head_flag = PAGE_NOT_FOUND;
+		snprintf(buf,buf_len,"page not found \n");
+	}
+
+	
+	/*
+		other path ...
+	*/
+	
+	return head_flag;
+}
+
+
 int GET_cb(int client_fd,char* full_buf,int full_len)
 {
 	fprintf(stdout,".......%s \n",__FUNCTION__);
-	char buf[] = "take easy,everthing is ok";
-	
- 	send_header(client_fd,strlen(buf),1);
+	char* buf = (char*)malloc(MAX_RSP_SIZE);
+	char* path = NULL;
+	char path_len = 0 ;
+
+	parse_path(full_buf,&path,&path_len);
+	char head_flag = make_rsp_buf(path,path_len,buf,MAX_RSP_SIZE);
+
+ 	send_header(client_fd,strlen(buf),head_flag);
 	send_body(client_fd,buf,strlen(buf));	
+	
+	free(buf);
 	return 0;
 		
 }
@@ -79,8 +152,8 @@ int POST_cb(int client_fd,char* full_buf,int full_len)
 	int  header_len = 0;
 
 	get_len(full_buf,&header_len,&content_len);
- 	send_header(client_fd,content_len,1);
-	send_body(client_fd,full_buf + header_len,content_len);	
+ 	send_header(client_fd,content_len,OK);
+	send_body(client_fd,full_buf + header_len,content_len);	//just send back to client
 
 	return 0;
 }
@@ -88,7 +161,7 @@ int POST_cb(int client_fd,char* full_buf,int full_len)
 int HEAD_cb(int client_fd,char* full_buf,int full_len)
 {
 	fprintf(stdout,".......%s \n",__FUNCTION__);
-	send_header(client_fd,0,1);
+	send_header(client_fd,0,OK);
 
 	return 0;
 }
@@ -116,7 +189,7 @@ int request_process(int client_fd,char* full_buf,int full_len)
 	if(!method_exist)
 	{
 		fprintf(stdout,"method not support!\n");
-		send_header(client_fd,0,0);
+		send_header(client_fd,0,NO_METHOD);
 	}
 	return 0;
 	

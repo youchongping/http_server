@@ -16,8 +16,6 @@ this is just a simple httpd .
 	will call the GET method defult ,   
 	and will display "take easy,everthing is ok" in browser.   
 	url may like this:http://172.16.0.13:1989 or http://0.0.0.0:1989   
-	or use path:http://172.16.0.13:1989/ or http://172.16.0.13:1989/wifi/config   
-
 
 	1.or you can user RESTclient  in firefox to test it.    
 

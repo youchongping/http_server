@@ -9,5 +9,11 @@ struct method
 	method_cb_t cb;	
 };
 
+enum header_flag
+{
+	OK =0,
+	NO_METHOD = 1,
+	PAGE_NOT_FOUND = 2,
+};
 
 #endif
