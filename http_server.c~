@@ -15,12 +15,12 @@
 #define SERVER_PORT "1989"
 #define MAX_RSP_SIZE 512
 
-#define HEAD_FORMAT "HTTP/1.1 ""%s%s""Content-Length: %d\r\n""Date: %s GMT\r\n\r\n"
+#define HEAD_FORMAT "HTTP/1.1 ""%s""Server: http_server_demo\r\nContent-type: text\r\n""Content-Length: %d\r\n""Date: %s GMT\r\n\r\n"
 
-char* header = "200 OK\r\n";
+char* header_ok = "200 OK\r\n";
 char* header_no_method = "405 Method Not Allowed\r\n";
 char* header_page_not_found = "404 Not Found\r\n";
-char* _hh_ = "Server: http_server_demo\r\nContent-type: text\r\n";
+
 void get_len(const char* buf,int* header_len,int* content_len);
 
 char* now_time(void)
@@ -38,16 +38,16 @@ int send_header(int client_fd,int body_len,int flag)
 	switch(flag)
 	{
 		case OK:
-			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header,/**/_hh_,/**/body_len,/**/now_time());
+			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header_ok,/**/body_len,/**/now_time());
 			break;
 		case NO_METHOD:
-			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header_no_method,/**/_hh_,/**/body_len,/**/now_time());
+			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header_no_method,/**/body_len,/**/now_time());
 			break;
 		case PAGE_NOT_FOUND:
-			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header_page_not_found,/**/_hh_,/**/body_len,/**/now_time());
+			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header_page_not_found,/**/body_len,/**/now_time());
 			break;
 		default:
-			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header,/**/_hh_,/**/body_len,/**/now_time());
+			snprintf(buf,CACHE_SIZE,HEAD_FORMAT,/**/header,/**/body_len,/**/now_time());
 			break;
 		
 	}
@@ -95,7 +95,6 @@ void parse_path(char* full_buf,char** path,char* path_len)
 	if( *path_len == 0)
 	{
 		printf("not find the path \n");
-		*path_len = 0;
 		return;	
 	}
 
@@ -106,6 +105,7 @@ char make_rsp_buf(char* path,char path_len,char* buf,int buf_len)
 {
 	printf("request path:%.*s\n", path_len, path); 
 	char head_flag = 0;
+
 	if((strncmp(path,"/",path_len) == 0) || path_len == 0)
 	{
 		snprintf(buf,buf_len,"take easy,everthing is ok");
@@ -119,11 +119,6 @@ char make_rsp_buf(char* path,char path_len,char* buf,int buf_len)
 		head_flag = PAGE_NOT_FOUND;
 		snprintf(buf,buf_len,"page not found \n");
 	}
-
-	
-	/*
-		other path ...
-	*/
 	
 	return head_flag;
 }
